@@ -141,8 +141,20 @@ export default function Home() {
         </picture>
       </section>
 
-      <section className="panel-image personal-invitation" aria-label="Invitación personalizada para Valentina Gómez">
-        <img src="/alma/invitacion-valentina-gomez.png" alt="Invitación personalizada para Valentina Gómez, con dos lugares reservados" />
+      <section className="panel-image personal-invitation" aria-label="Invitación personalizada para Martina López y Sofía Fernández">
+        <img src="/alma/invitacion-personalizada-fondo.png" alt="" aria-hidden="true" />
+        <div className="personal-invitation__content">
+          <p className="personal-invitation__intro">Esta invitación fue creada<br />especialmente para</p>
+          <div className="personal-invitation__count" aria-label="Dos personas invitadas">2</div>
+          <h2>
+            <span className="guest-name">Martina López</span>
+            <span className="guest-joiner">y</span>
+            <span className="guest-name">Sofía Fernández</span>
+          </h2>
+          <div className="personal-invitation__divider" aria-hidden="true"><i /></div>
+          <p className="personal-invitation__places">Tenés 2 lugares reservados</p>
+          <p className="personal-invitation__message">Me hace muy feliz compartir<br />este momento con ustedes.</p>
+        </div>
       </section>
 
       <div className="hero-countdown-seam" aria-hidden="true">
