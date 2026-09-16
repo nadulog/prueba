@@ -4,6 +4,65 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 const EVENT_TIMESTAMP = Date.UTC(2026, 11, 13, 0, 0, 0);
 
+const invitationPersonalizationScript = String.raw`
+(function () {
+  var SUPABASE_URL = "https://fotugzhxlajyjdnjteld.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvdHVnemh4bGFqeWpkbmp0ZWxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNDY2MzAsImV4cCI6MjA4MDgyMjYzMH0.GnEzF-iJuiZJH5IVUgszWOq5qv4AeHfFf8Y3_YRW5FA";
+  var RSVP_BASE = "https://bloomdate-rsvp.netlify.app";
+
+  function formatNames(names) {
+    if (names.length === 1) return names[0];
+    return names.slice(0, -1).join(", ") + " y " + names[names.length - 1];
+  }
+
+  async function initInvitation() {
+    var params = new URLSearchParams(window.location.search);
+    var token = params.get("invite");
+    if (!token) return;
+
+    try {
+      var res = await fetch(SUPABASE_URL + "/rest/v1/rpc/get_invite_by_token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ p_token: token })
+      });
+
+      if (!res.ok) return;
+      var rows = await res.json();
+      var invite = rows && rows[0];
+      if (!invite) return;
+
+      var names = [invite.first_name].concat(
+        (invite.companions || []).map(function (companion) { return companion.first_name; })
+      ).filter(Boolean);
+      if (!names.length) return;
+
+      var totalPasses = 1 + (invite.companions || []).length;
+      var namesEl = document.getElementById("nombres-invitados");
+      if (namesEl) namesEl.textContent = formatNames(names);
+
+      var passesEl = document.getElementById("cantidad-lugares");
+      if (passesEl) {
+        passesEl.textContent = "Tenés " + totalPasses + (totalPasses === 1 ? " lugar reservado" : " lugares reservados");
+      }
+
+      var confirmBtn = document.getElementById("boton-confirmar");
+      if (confirmBtn && invite.event_slug) {
+        confirmBtn.href = RSVP_BASE + "/r/" + encodeURIComponent(invite.event_slug) + "?invite=" + encodeURIComponent(token);
+      }
+    } catch (_error) {
+      return;
+    }
+  }
+
+  initInvitation();
+})();
+`;
+
 type Countdown = {
   dias: number;
   horas: number;
@@ -141,14 +200,14 @@ export default function Home() {
         </picture>
       </section>
 
-      <section className="panel-image personal-invitation" aria-label="Invitación personalizada con espacios en blanco para invitados">
+      <section className="panel-image personal-invitation" aria-label="Invitación personalizada para invitados">
         <img src="/alma/invitacion-personalizada-fondo.png" alt="" aria-hidden="true" />
         <div className="personal-invitation__content">
           <p className="personal-invitation__intro">Esta invitación fue creada<br />especialmente para</p>
           <div className="personal-invitation__count" aria-label="Espacio para la cantidad de invitados" />
-          <h2 aria-label="Espacio reservado para los nombres de los invitados" />
+          <h2 id="nombres-invitados" aria-label="Nombres de los invitados" />
           <div className="personal-invitation__divider" aria-hidden="true"><i /></div>
-          <p className="personal-invitation__places">Tenés <span className="personal-invitation__blank-count" aria-hidden="true" /> lugares reservados</p>
+          <p id="cantidad-lugares" className="personal-invitation__places">Tenés <span className="personal-invitation__blank-count" aria-hidden="true" /> lugares reservados</p>
           <p className="personal-invitation__message">Me hace muy feliz compartir<br />este momento con ustedes.</p>
         </div>
       </section>
@@ -232,7 +291,7 @@ export default function Home() {
 
       <section id="confirmar" className="panel-image interactive-panel closing">
         <img src="/alma/cierre-sin-fecha.png" alt="Alma te invita a celebrar sus quince años" />
-        <a className="hotspot rsvp" href="https://bloomdate-rsvp.netlify.app/r/cumple-xv-almaa" target="_blank" rel="noreferrer" aria-label="Confirmar asistencia a los XV de Alma" />
+        <a id="boton-confirmar" className="hotspot rsvp" href="https://bloomdate-rsvp.netlify.app/r/cumple-xv-almaa" target="_blank" rel="noreferrer" aria-label="Confirmar asistencia a los XV de Alma" />
       </section>
 
       <footer className="bloomdate-footer panel-image interactive-panel">
@@ -283,6 +342,7 @@ export default function Home() {
         </div>
       )}
       {toast && <div className="toast" role="status">{toast}</div>}
+      <script id="personalizar-invitacion" dangerouslySetInnerHTML={{ __html: invitationPersonalizationScript }} />
     </main>
   );
 }
